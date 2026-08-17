@@ -22,7 +22,8 @@ android {
         debug {
             // No applicationIdSuffix. The package must stay exactly
             // com.clowncare.audiocuesbridge so it matches the watchapp's companionApp list.
-        release {
+}
+release {
             isMinifyEnabled = false
         }
     }
