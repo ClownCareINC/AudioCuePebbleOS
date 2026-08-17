@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Audio Cues Pebble Bridge</string>
+    <string name="accessibility_label">Audio Cues Pebble Bridge</string>
+    <string name="accessibility_description">Lets your Pebble watch press the GO, Stop All and cue navigation controls inside Audio Cues. This service only reads and taps the Audio Cues app and sends nothing off your phone.</string>
+</resources>
