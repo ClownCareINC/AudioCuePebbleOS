@@ -5,6 +5,9 @@ plugins {
 
 android {
     namespace = "com.clowncare.audiocuesbridge"
+
+    // Must be 36 or newer: PebbleKit 2 pulls in androidx.core 1.17.0, which refuses
+    // to be compiled against anything older.
     compileSdk = 36
 
     defaultConfig {
