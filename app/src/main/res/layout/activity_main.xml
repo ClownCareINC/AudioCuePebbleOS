@@ -24,6 +24,37 @@
             android:text="Lets a Pebble watch press GO in Audio Cues."
             android:textSize="14sp" />
 
+        <!-- Pebble link diagnostics -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Pebble link"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/statusPebble"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:fontFamily="monospace"
+            android:textSize="13sp" />
+
+        <Button
+            android:id="@+id/btnPingWatch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Send test message to watch" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Open Audio Cues on the watch first, then tap this. The result tells you exactly why a message is not getting through."
+            android:textSize="13sp" />
+
         <!-- Step 1 -->
         <TextView
             android:layout_width="wrap_content"
