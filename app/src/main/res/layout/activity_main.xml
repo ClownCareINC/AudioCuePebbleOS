@@ -162,6 +162,20 @@
             android:text="Test NEXT CUE in 5 seconds" />
 
         <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="5. Cue label not showing on the watch? Tap below, then start a cue in Audio Cues. After 8 seconds it lists every text on screen and copies it to the clipboard."
+            android:textSize="14sp" />
+
+        <Button
+            android:id="@+id/btnDumpScreen"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Dump Audio Cues screen (8s)" />
+
+        <TextView
             android:id="@+id/logView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

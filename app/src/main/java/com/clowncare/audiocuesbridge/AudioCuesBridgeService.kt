@@ -259,6 +259,17 @@ class AudioCuesBridgeService : AccessibilityService() {
                 r.width() * r.height()
             }
 
+    /**
+     * Work out which cue to show on the watch, trying the most reliable source first.
+     *
+     * 1. Whatever you mapped by hand. Always wins.
+     * 2. A view whose id looks like a now-playing label (contains cue/title/track/playing).
+     * 3. The biggest text in the control panel, meaning the bottom strip below the cue list.
+     * 4. The highlighted row in the cue list, if Audio Cues marks one as selected.
+     *
+     * Step 4 was the only rule in the first version, and it almost never fired because
+     * Android list rows rarely report isSelected.
+     */
     private fun readCueLabel(root: AccessibilityNodeInfo): String? {
         Prefs.selector(this, Prefs.KEY_CUE_LABEL)?.let { sel ->
             findBySelector(root, sel)?.let { node ->
@@ -266,11 +277,71 @@ class AudioCuesBridgeService : AccessibilityService() {
             }
         }
 
-        val list = findCueList(root) ?: return null
-        val rows = (0 until list.childCount).mapNotNull { list.getChild(it) }
-        val selected = rows.firstOrNull { it.isSelected || it.isAccessibilityFocused }
-            ?: return null
-        return collectText(selected).trim().take(60).takeIf { it.isNotBlank() }
+        val all = nodes(root)
+
+        // 2. id-based guess
+        all.firstOrNull { node ->
+            val id = node.viewIdResourceName?.substringAfterLast('/')?.lowercase() ?: return@firstOrNull false
+            (id.contains("cue") || id.contains("title") || id.contains("track") || id.contains("playing")) &&
+                !node.text.isNullOrBlank()
+        }?.let { return it.text.toString().trim().take(60) }
+
+        // 3. control panel: the widest text sitting below the cue list
+        val list = findCueList(root)
+        val listBottom = list?.let { Rect().also { r -> it.getBoundsInScreen(r) }.bottom } ?: 0
+        val screenBottom = Rect().also { root.getBoundsInScreen(it) }.bottom
+        if (listBottom in 1 until screenBottom) {
+            all.mapNotNull { node ->
+                val text = node.text?.toString()?.trim()
+                if (text.isNullOrBlank() || text.length < 2) return@mapNotNull null
+                val r = Rect().also { node.getBoundsInScreen(it) }
+                if (r.top < listBottom || r.width() <= 0) return@mapNotNull null
+                r.width() to text
+            }.maxByOrNull { it.first }?.let { return it.second.take(60) }
+        }
+
+        // 4. selected row in the cue list
+        val rows = (0 until (list?.childCount ?: 0)).mapNotNull { list?.getChild(it) }
+        rows.firstOrNull { it.isSelected || it.isAccessibilityFocused }?.let {
+            return collectText(it).trim().take(60).takeIf { t -> t.isNotBlank() }
+        }
+
+        return null
+    }
+
+    /**
+     * Every text-bearing node on the Audio Cues screen, with ids and positions.
+     * Used by the bridge app's "Dump Audio Cues screen" button so a human can see
+     * exactly which view holds the playing cue, instead of us guessing.
+     */
+    fun dumpScreen(): String {
+        val root = rootInActiveWindow ?: return "No active window."
+        if (root.packageName != Cmd.AUDIO_CUES_PKG) {
+            return "Frontmost app is ${root.packageName}, not Audio Cues."
+        }
+        val screen = Rect().also { root.getBoundsInScreen(it) }
+        val list = findCueList(root)
+        val listBounds = list?.let { Rect().also { r -> it.getBoundsInScreen(r) } }
+
+        val sb = StringBuilder()
+        sb.append("screen ${screen.width()}x${screen.height()}\n")
+        sb.append("cue list: ${listBounds ?: "not found"}\n")
+        sb.append("--- text nodes, top to bottom ---\n")
+
+        nodes(root)
+            .mapNotNull { node ->
+                val text = node.text?.toString()?.trim()
+                val desc = node.contentDescription?.toString()?.trim()
+                if (text.isNullOrBlank() && desc.isNullOrBlank()) return@mapNotNull null
+                val r = Rect().also { node.getBoundsInScreen(it) }
+                val id = node.viewIdResourceName?.substringAfterLast('/') ?: "-"
+                r.top to "y=${r.top}-${r.bottom} id=$id sel=${node.isSelected} " +
+                    "txt=${text ?: ""} desc=${desc ?: ""}"
+            }
+            .sortedBy { it.first }
+            .forEach { sb.append(it.second).append('\n') }
+
+        return sb.toString()
     }
 
     private fun collectText(node: AccessibilityNodeInfo): String =

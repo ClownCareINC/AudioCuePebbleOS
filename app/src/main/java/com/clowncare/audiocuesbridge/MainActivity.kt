@@ -1,5 +1,7 @@
 package com.clowncare.audiocuesbridge
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
@@ -32,6 +34,7 @@ class MainActivity : AppCompatActivity() {
     private companion object {
         const val TEST_DELAY_MS = 5000L
         const val WATCH_QUERY_TIMEOUT_MS = 3000L
+        const val DUMP_DELAY_MS = 8000L
     }
 
     private val handler = Handler(Looper.getMainLooper())
@@ -61,6 +64,28 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnTestGo).setOnClickListener { runTest(Cmd.GO) }
         findViewById<Button>(R.id.btnTestStop).setOnClickListener { runTest(Cmd.STOP_ALL) }
         findViewById<Button>(R.id.btnTestNext).setOnClickListener { runTest(Cmd.NEXT) }
+        findViewById<Button>(R.id.btnDumpScreen).setOnClickListener { dumpScreen() }
+    }
+
+    /**
+     * Opens Audio Cues, waits for you to get a cue playing, then lists every piece of text
+     * on that screen with its view id and position. Copies the result to the clipboard.
+     */
+    private fun dumpScreen() {
+        if (AudioCuesBridgeService.instance == null) {
+            toast("Turn on the accessibility service first.")
+            return
+        }
+        if (!openAudioCues()) return
+
+        log("Dumping screen in ${DUMP_DELAY_MS / 1000}s. Start a cue now.")
+        handler.postDelayed({
+            val dump = AudioCuesBridgeService.instance?.dumpScreen() ?: "Service went away"
+            val clip = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+            clip.setPrimaryClip(ClipData.newPlainText("Audio Cues screen", dump))
+            logView.text = dump
+            toast("Copied to clipboard. Paste it to Claude.")
+        }, DUMP_DELAY_MS)
     }
 
     override fun onResume() {

@@ -14,16 +14,17 @@ android {
         applicationId = "com.clowncare.audiocuesbridge"
         minSdk = 26
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.2.0"
     }
 
     buildTypes {
         debug {
-            // No applicationIdSuffix. The package must stay exactly
+            // No applicationIdSuffix on purpose. The package must stay exactly
             // com.clowncare.audiocuesbridge so it matches the watchapp's companionApp list.
-}
-release {
+            isMinifyEnabled = false
+        }
+        release {
             isMinifyEnabled = false
         }
     }
